@@ -1,0 +1,5 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp" android:background="?android:attr/selectableItemBackground">
+<TextView android:id="@+id/modelName" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Model Name" android:textSize="16sp" android:textStyle="bold" android:textColor="#000000"/>
+<TextView android:id="@+id/modelInfo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Downloads: 0" android:textSize="12sp" android:textColor="#666666" android:layout_marginTop="2dp"/>
+<TextView android:id="@+id/modelTags" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tags" android:textSize="11sp" android:textColor="#888888" android:layout_marginTop="2dp" android:maxLines="2" android:ellipsize="end"/>
+</LinearLayout>
