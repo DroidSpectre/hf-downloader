@@ -145,8 +145,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    // UPDATED: Changed from List<String> to List<FileInfo>
-    private class ModelDetailsTask extends AsyncTask<HuggingFaceModel, Void, List<FileInfo>> {
+    private class ModelDetailsTask extends AsyncTask<HuggingFaceModel, Void, List<String>> {
         private HuggingFaceModel model;
 
         @Override
@@ -156,13 +155,13 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        protected List<FileInfo> doInBackground(HuggingFaceModel... params) {
+        protected List<String> doInBackground(HuggingFaceModel... params) {
             model = params[0];
             return getModelFiles(model.getId());
         }
 
         @Override
-        protected void onPostExecute(List<FileInfo> files) {
+        protected void onPostExecute(List<String> files) {
             loadingProgress.setVisibility(View.GONE);
 
             if (files != null && !files.isEmpty()) {
@@ -212,14 +211,11 @@ public class MainActivity extends Activity {
         return models;
     }
 
-    // FIXED: Use different API endpoint that includes file metadata with sizes
-    private List<FileInfo> getModelFiles(String repoId) {
-        List<FileInfo> files = new ArrayList<FileInfo>();
+    private List<String> getModelFiles(String repoId) {
+        List<String> files = new ArrayList<String>();
 
         try {
-            // CRITICAL FIX: Use the Hub API endpoint with files_metadata parameter
-            // This endpoint provides detailed file information including sizes
-            String apiUrl = "https://huggingface.co/api/models/" + repoId + "?blobs=true";
+            String apiUrl = "https://huggingface.co/api/models/" + repoId;
             String jsonResponse = makeHttpRequest(apiUrl);
 
             if (jsonResponse != null) {
@@ -230,25 +226,8 @@ public class MainActivity extends Activity {
                     for (int i = 0; i < siblings.length(); i++) {
                         JSONObject file = siblings.getJSONObject(i);
                         String filename = file.optString("rfilename", "");
-                        
-                        // Try to get size from different possible fields
-                        long size = 0;
-                        
-                        // Check for size field directly
-                        if (file.has("size") && !file.isNull("size")) {
-                            size = file.optLong("size", 0);
-                        }
-                        
-                        // Check for lfs object which might contain size
-                        if (size == 0 && file.has("lfs") && !file.isNull("lfs")) {
-                            JSONObject lfs = file.optJSONObject("lfs");
-                            if (lfs != null) {
-                                size = lfs.optLong("size", 0);
-                            }
-                        }
-                        
                         if (!TextUtils.isEmpty(filename)) {
-                            files.add(new FileInfo(filename, size));
+                            files.add(filename);
                         }
                     }
                 }
@@ -305,23 +284,17 @@ public class MainActivity extends Activity {
         return null;
     }
 
-    // UPDATED: Changed parameter type from List<String> to List<FileInfo> and updated display logic
-    private void showFilesDialog(final HuggingFaceModel model, final List<FileInfo> files) {
+    private void showFilesDialog(final HuggingFaceModel model, final List<String> files) {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("Model Files - " + model.getId());
 
-        // Create array with formatted file names and sizes
-        String[] fileArray = new String[files.size()];
-        for (int i = 0; i < files.size(); i++) {
-            FileInfo fileInfo = files.get(i);
-            fileArray[i] = fileInfo.toString(); // Uses FileInfo.toString() which shows "filename (size)"
-        }
+        String[] fileArray = files.toArray(new String[files.size()]);
 
         builder.setItems(fileArray, new android.content.DialogInterface.OnClickListener() {
             @Override
             public void onClick(android.content.DialogInterface dialog, int which) {
-                FileInfo selectedFile = files.get(which);
-                downloadModelFile(model.getId(), selectedFile.getFilename());
+                String selectedFile = files.get(which);
+                downloadModelFile(model.getId(), selectedFile);
             }
         });
 
